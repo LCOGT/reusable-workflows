@@ -4,7 +4,7 @@ on:
   inputs:
     version-type:
       type: choice
-      description: Which version to bump (major, minor, patch)
+      description: "Which version to bump (major, minor, patch)"
       options:
       - major
       - minor
@@ -12,7 +12,7 @@ on:
       default: patch
     python-version:
       type: choice
-      description: Which Python version to use
+      description: "Which Python version to use"
       options:
        - "3.8"
        - "3.9"
