@@ -1,0 +1,56 @@
+name: Update Poetry Version
+on:
+  workflow_call:
+  inputs:
+    version-type:
+      type: choice
+      description: Which version to bump (major, minor, patch)
+      options:
+      - major
+      - minor
+      - patch
+      default: patch
+    python-version:
+      type: choice
+      description: Which Python version to use
+      options:
+       - "3.8"
+       - "3.9"
+       - "3.10"
+       - "3.11"
+      default: "3.10"
+    fetch-depth:
+      description: "Number of commits to fetch. 0 indicates all history for all branches and tags."
+      type: number
+      required: false
+      default: 1
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: ${{ inputs.fetch-depth }}
+      
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ inputs.python-version }}
+       
+      - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install 'poetry'
+      
+      - name: Upgrade package
+      run: |
+        poetry version ${{ version-type }}
+        # add new version to env
+        echo "NEW_VERSION=`poetry version -s`" >> "$GITHUB_ENV"
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: Upgrade package to $NEW_VERSION via GitHub Action
+        file_pattern: 'pyproject.toml'
