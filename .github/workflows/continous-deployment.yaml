@@ -25,6 +25,12 @@ jobs:
       REGISTRY: ghcr.io
 
     steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Expose GitHub Runtime
+        uses: crazy-max/ghaction-github-runtime@v3
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -70,6 +76,7 @@ jobs:
         shell: devenv shell bash -e {0}
         env:
           SKAFFOLD_DEFAULT_REPO: ${{ env.REGISTRY }}/${{ github.repository }}
+          SKAFFOLD_BUILDX_ARGS: "--cache-to type=gha,mode=max,ignore-error=true --cache-from type=gha"
         run: |
           skaffold build -p app --file-output build-artifacts.json
           echo "buildArtifacts=$(cat build-artifacts.json)" >> "$GITHUB_OUTPUT"
@@ -321,7 +328,7 @@ jobs:
             const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: `${context.repo.repo}-deploy`,
-              pull_number: pullRequest.number,
+              pull_number: prNumber,
             });
 
             core.setOutput("mergeCommit", pr.data.merge_commit_sha);
