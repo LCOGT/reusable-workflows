@@ -31,17 +31,6 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Determine changes
-        uses: dorny/paths-filter@v2
-        id: changes
-        with:
-          base: ${{ github.ref }}
-          filters: |
-            k8s:
-              - 'k8s/**'
-            src:
-              - '!k8s/**'
-
       - name: Install Nix
         uses: nixbuild/nix-quick-install-action@v26
 
@@ -79,7 +68,6 @@ jobs:
       - name: Build and push container image
         id: skaffold
         shell: devenv shell bash -e {0}
-        if: steps.changes.outputs.src == 'true'
         env:
           SKAFFOLD_DEFAULT_REPO: ${{ env.REGISTRY }}/${{ github.repository }}
         run: |
