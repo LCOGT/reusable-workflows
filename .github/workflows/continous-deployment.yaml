@@ -157,29 +157,40 @@ jobs:
             const coAuthoredBy = "Co-authored-by: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>";
 
             let prCommitTitle = commitSubject;
-            let prCommitBody = `Source-commit: ${commitUrl}\n\n${commitBody}`;
-            let prBody = `Source-commit: ${commitUrl}\n\n${commitBody}`;
+
+            const prCommitBodyElms = [];
+            const prBodyElms = [];
 
             if (process.env.GITHUB_REF_TYPE === "tag") {
               const tag = process.env.GITHUB_REF_NAME;
-              const release = await github.rest.repos.getReleaseByTag({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag: tag,
-              });
 
-              if (release.status === 200 ) {
+              try {
+                const release = await github.rest.repos.getReleaseByTag({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  tag: tag,
+                });
                 prCommitTitle = `release: ${release.data.title}`;
                 const releaseId = `${context.repo.owner}/${context.repo.repo}/${tag}`;
                 const releaseNotesTemplate = `{{ githubRelease "${releaseId}" | expandGithubLinks "${process.env.GITHUB_REPOSITORY}" }}`;
 
-                prCommitBody = releaseNotesTemplate;
-                prBody = releaseNotesTemplate;
+                prCommitBodyElms.push(releaseNotesTemplate);
+                prBody.push(releaseNotesTemplate);
+
+              } catch (error) {
+                core.setFailed(`Release for tag ${tag} not found.`);
               }
+            } else {
+              prCommitBodyElms.push(`Source-commit: ${commitUrl}`, commitBody);
+              prBodyElms.push(`Source-commit: ${commitUrl}`, commitBody);
+
             }
 
-            prCommitBody += `\n\n${coAuthoredBy}`;
-            prBody += `\n\nTriggered-by: @${context.actor}`;
+            prCommitBodyElms.push(coAuthoredBy);
+            prBodyElms.push(`Triggered-by: @${context.actor}`);
+
+            prCommitBody = prCommitBodyElms.filter(x => x).join("\n\n");
+            prBody = prBodyElms.filter(x => x).join("\n<br>\n");
 
             core.setOutput("botName", botName);
             core.setOutput("botEmail", botEmail);
