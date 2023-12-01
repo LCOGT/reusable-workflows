@@ -158,7 +158,7 @@ jobs:
 
             let prCommitTitle = commitSubject;
             let prCommitBody = `Source-commit: ${commitUrl}\n\n${commitBody}`;
-            let prBody = `${commitUrl}\n\n${commitBody}`;
+            let prBody = `Source-commit: ${commitUrl}\n\n${commitBody}`;
 
             if (process.env.GITHUB_REF_TYPE === "tag") {
               const tag = process.env.GITHUB_REF_NAME;
@@ -179,7 +179,7 @@ jobs:
             }
 
             prCommitBody += `\n\n${coAuthoredBy}`;
-            prBody += `\n\n@${context.actor}`;
+            prBody += `\n\nTriggered-by: @${context.actor}`;
 
             core.setOutput("botName", botName);
             core.setOutput("botEmail", botEmail);
@@ -288,6 +288,13 @@ jobs:
 
             prId = "${{ steps.staging.outputs.prId }}";
             prNumber = "${{ steps.staging.outputs.prNumber }}";
+
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: `${context.repo.repo}-deploy`,
+              issue_number: prNumber,
+              assignees: [context.actor],
+            });
 
             const enableAutoMergeMutation = `
               mutation($id: ID!) {
