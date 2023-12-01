@@ -204,27 +204,24 @@ jobs:
             --git-commit-footer '' \
             \
             --pr-base-branch main \
-            --pr-labels octopilot,staging,sha=${{ github.sha }} \
+            --pr-labels octopilot,staging \
             --pr-title 'staging: ${{ steps.common.outputs.prCommitTitle }}' \
             --pr-body '${{ steps.common.outputs.prBody }}'
 
       - run: npm install @octokit/request-error
 
       # This is a hack until octopilot supports Github's auto-merge feature.
-      - name: Auto merge staging PR
+      - name: Get staging PR
         id: staging
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.lco-deploy-bot.outputs.token }}
           script: |
-            const { RequestError } = require("@octokit/request-error");
-
-            const sha = context.sha;
             const pullRequestQuery = `
               query {
                 search(
                   type: ISSUE,
-                  query: "repo:${context.repo.owner}/${context.repo.repo}-deploy type:pr state:open label:octopilot label:staging label:sha=${sha}",
+                  query: "repo:${context.repo.owner}/${context.repo.repo}-deploy type:pr state:open label:octopilot label:staging",
                   first: 2
                 ){
                   issueCount,
@@ -238,34 +235,52 @@ jobs:
               }
             `;
 
-            console.log(pullRequestQuery);
+            core.info(pullRequestQuery);
 
             let pullRequest;
+            let attempt = 0;
+
+            core.setOutput("created", false);
 
             while (true) {
+              attempt++;
 
               const pullRequests = await github.graphql(pullRequestQuery);
 
               if (pullRequests.search.issueCount == 1) {
-                console.log(pullRequests);
+                core.info(pullRequests);
                 pullRequest = pullRequests.search.nodes[0];
                 break;
               }
 
               if (pullRequests.search.issueCount > 1) {
-                throw new Error("unable to find matching PR");
+                core.info(pullRequests);
+                throw new Error("found multiple matching PR");
+              }
+
+              if (attempt > 10) {
+                core.info("no matching PR");
+                return;
               }
 
               await new Promise(r => setTimeout(r, 1000));
             }
 
-            // remove label to avoid cluttering
-            await github.rest.issues.removeLabel({
-              owner: context.repo.owner,
-              repo: `${context.repo.repo}-deploy`,
-              issue_number: pullRequest.number,
-              name: `sha=${sha}`,
-            });
+            core.setOutput("created", true);
+            core.setOutput("prNumber", pullRequest.number);
+            core.setOutput("prId", pullRequest.id);
+
+      - name: Auto merge staging PR
+        id: mergeStaging
+        if: ${{ steps.staging.outputs.created == 'true' }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.lco-deploy-bot.outputs.token }}
+          script: |
+            const { RequestError } = require("@octokit/request-error");
+
+            prId = "${{ steps.staging.outputs.prId }}";
+            prNumber = "${{ steps.staging.outputs.prNumber }}";
 
             const enableAutoMergeMutation = `
               mutation($id: ID!) {
@@ -278,11 +293,11 @@ jobs:
             `;
 
             const autoMergeVars = {
-              id: pullRequest.id
+              id: prId
             };
 
             const autoMergeResponse = await github.graphql(enableAutoMergeMutation, autoMergeVars);
-            console.log(autoMergeResponse);
+            core.info(autoMergeResponse);
 
             // wait for it to be merged
             while (true) {
@@ -290,9 +305,9 @@ jobs:
                 const merged = await github.rest.pulls.checkIfMerged({
                   owner: context.repo.owner,
                   repo: `${context.repo.repo}-deploy`,
-                  pull_number: pullRequest.number,
+                  pull_number: prNumber,
                 });
-                console.log(merged);
+                core.info(merged);
                 break;
               } catch (error) {
                 if (error.status === 404) {
