@@ -88,14 +88,6 @@ jobs:
           private-key: ${{ secrets.LCO_DEPLOY_BOT_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-      - name: Checkout deploy repo
-        uses: actions/checkout@v4
-        with:
-          token: ${{ steps.lco-deploy-bot.outputs.token }}
-          repository: ${{ github.repository }}-deploy
-          persist-credentials: false
-          ref: 'main'
-
       - name: Install Nix
         uses: cachix/install-nix-action@v24
         with:
