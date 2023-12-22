@@ -70,7 +70,7 @@ jobs:
       - name: Upload Skaffold build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: skaffold-build-artifacts
+          name: skaffold-build
           path: built-images.json
 
   update:
@@ -103,7 +103,7 @@ jobs:
       - name: Download Skaffold build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: skaffold-build-artifacts
+          name: skaffold-build
 
       - name: Gather commit/PR metadata
         id: common
