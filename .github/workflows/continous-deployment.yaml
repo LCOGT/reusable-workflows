@@ -62,12 +62,10 @@ jobs:
 
       - name: Build and push container image
         id: skaffold
-        shell: nix develop --impure --command bash -e {0}
         env:
           SKAFFOLD_DEFAULT_REPO: ${{ env.REGISTRY }}/${{ github.repository }}
           SKAFFOLD_BUILDX_ARGS: "--cache-to type=gha,mode=max,ignore-error=true --cache-from type=gha"
-        run: |
-          skaffold build -p app --file-output built-images.json
+        run: nix develop --impure --command skaffold build -p app --file-output built-images.json
 
       - name: Upload Skaffold build artifacts
         uses: actions/upload-artifact@v4
@@ -167,9 +165,8 @@ jobs:
             core.setOutput("prBody", prBody);
 
       - name: Create staging PR
-        shell: nix develop --impure --command bash -e {0}
         run: |
-          nix run github:LCOGT/devenv-k8s#octopilot -- \
+          nix develop --impure --command octopilot \
             --fail-on-error --log-level debug \
             --github-auth-method app \
             --github-app-id '${{ secrets.LCO_DEPLOY_BOT_APP_ID }}' \
