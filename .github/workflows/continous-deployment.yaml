@@ -248,7 +248,7 @@ jobs:
             --git-author-email '${{ steps.common.outputs.botEmail }}' \
             --git-committer-name '${{ steps.common.outputs.botName }}' \
             --git-committer-email '${{ steps.common.outputs.botEmail }}' \
-            --git-commit-title 'staging: ${{ steps.common.outputs.prCommitTitle }}' \
+            --git-commit-title 'prod: ${{ steps.common.outputs.prCommitTitle }}' \
             --git-commit-body  '${{ steps.common.outputs.prCommitBody }}' \
             --git-commit-footer '' \
             \
