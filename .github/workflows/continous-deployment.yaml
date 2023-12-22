@@ -169,7 +169,7 @@ jobs:
       - name: Create staging PR
         shell: nix develop --impure --command bash -e {0}
         run: |
-          nix run github:dailymotion-oss/octopilot/v1.9.3 -- \
+          nix run github:LCOGT/devenv-k8s#octopilot -- \
             --fail-on-error --log-level debug \
             --github-auth-method app \
             --github-app-id '${{ secrets.LCO_DEPLOY_BOT_APP_ID }}' \
