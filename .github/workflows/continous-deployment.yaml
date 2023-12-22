@@ -183,6 +183,9 @@ jobs:
             --pr-assignees '${{ github.actor }}' \
             --pr-title 'staging: ${{ steps.common.outputs.prCommitTitle }}' \
             --pr-body '${{ steps.common.outputs.prBody }}' \
+            --pr-merge \
+            --pr-merge-auto \
+            --pr-merge-auto-wait \
             --output-results staging-pr.json
 
       - name: Annotate w/ staging PR
