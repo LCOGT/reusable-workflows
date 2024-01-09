@@ -228,8 +228,6 @@ jobs:
               pull_number: pr_number,
             });
 
-            console.log(pr);
-
             const sha = pr.data.merge_commit_sha;
 
             core.setOutput("sha", sha);
