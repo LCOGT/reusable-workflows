@@ -212,6 +212,7 @@ jobs:
             core.summary.write();
 
       - name: Get staging PR metadata
+        if: github.event_name == 'release'
         id: staging-pr
         uses: actions/github-script@v7
         with:
@@ -233,6 +234,7 @@ jobs:
             core.setOutput("sha", sha);
 
       - name: Create prod PR
+        if: github.event_name == 'release'
         run: |
           nix run github:LCOGT/devenv-k8s#octopilot -- \
             --fail-on-error --log-level debug \
@@ -263,6 +265,7 @@ jobs:
 
       - name: Annotate w/ prod PR
         uses: actions/github-script@v7
+        if: github.event_name == 'release'
         with:
           script: |
             const { readFile } = require("fs/promises");
