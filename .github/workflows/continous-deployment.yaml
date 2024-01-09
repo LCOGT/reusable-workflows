@@ -131,7 +131,7 @@ jobs:
               const releaseNotesTemplate = `{{ githubRelease "${releaseId}" | expandGithubLinks "${ownerRepo}" }}`;
 
               prCommitBodyElms.push(releaseNotesTemplate);
-              prBody.push(releaseNotesTemplate);
+              prBodyElms.push(releaseNotesTemplate);
             } else {
               const commitMessage = context.payload.head_commit.message;
               const commitLines = commitMessage.split("\n");
