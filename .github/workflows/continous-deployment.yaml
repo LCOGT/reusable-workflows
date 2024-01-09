@@ -126,7 +126,7 @@ jobs:
 
               prCommitTitle = `release: ${release.name}`;
 
-              const ownerRepo = `${context.reop.owner}/${context.repo.repo}`;
+              const ownerRepo = `${context.repo.owner}/${context.repo.repo}`;
               const releaseId = `${ownerRepo}/${release.tag_name}`;
               const releaseNotesTemplate = `{{ githubRelease "${releaseId}" | expandGithubLinks "${ownerRepo}" }}`;
 
