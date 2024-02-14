@@ -147,7 +147,6 @@ jobs:
             }
 
             prCommitBodyElms.push(coAuthoredBy);
-            prBodyElms.push(`Triggered-by: @${context.actor}`);
 
             prCommitBody = prCommitBodyElms.filter(x => x).join("\n\n");
             prBody = prBodyElms.filter(x => x).join("\n<br>\n");
