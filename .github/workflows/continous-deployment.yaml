@@ -63,9 +63,8 @@ jobs:
       - name: Build and push container image
         id: skaffold
         env:
-          SKAFFOLD_DEFAULT_REPO: ${{ env.REGISTRY }}/${{ github.repository }}
           SKAFFOLD_BUILDX_ARGS: "--cache-to type=gha,mode=max,ignore-error=true --cache-from type=gha"
-        run: nix develop --impure --command skaffold build -p app --file-output built-images.json
+        run: nix develop --impure --command skaffold build -p app --file-output built-images.json --default-repo '${{ env.REGISTRY }}/${{ github.repository }}'
 
       - name: Upload Skaffold build artifacts
         uses: actions/upload-artifact@v4
