@@ -6,7 +6,7 @@
 # It is designed to be called from the source repo.
 # Assumes the deploy repo is named {source_code_repo}-deploy
 
-name: continuous Deployment
+name: Continuous Deployment
 
 on:
   workflow_call:
