@@ -16,6 +16,12 @@ on:
         description: Comma seperated list of Skaffold profile(s) to use for building container(s).
         required: true
         default: "app"
+        
+      skaffoldBuildModules:
+        type: string
+        description: Comma seperated list of Skaffold modules(s) to use for building container(s). By default all modules are used.
+        required: true
+        default: ""
 
 jobs:
   container:
@@ -70,7 +76,7 @@ jobs:
         id: skaffold
         env:
           SKAFFOLD_BUILDX_ARGS: "--cache-to type=gha,mode=max,ignore-error=true --cache-from type=gha"
-        run: nix develop --impure --command skaffold build -p '${{ inputs.skaffoldBuildProfiles }}' --file-output built-images.json --default-repo '${{ env.REGISTRY }}/${{ github.repository }}'
+        run: nix develop --impure --command skaffold build -m '${{ inputs.skaffoldBuildModules }}' -p '${{ inputs.skaffoldBuildProfiles }}' --file-output built-images.json --default-repo '${{ env.REGISTRY }}/${{ github.repository }}'
 
       - name: Upload Skaffold build artifacts
         uses: actions/upload-artifact@v4
