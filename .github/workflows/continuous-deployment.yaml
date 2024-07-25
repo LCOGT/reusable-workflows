@@ -180,6 +180,13 @@ jobs:
             core.setOutput("prBody", prBody);
 
       - name: Create & merge staging PR
+        env:
+          botName: ${{ steps.common.outputs.botName }}
+          botEmail: ${{ steps.common.outputs.botEmail }}
+          prCommitTitle: ${{ steps.common.outputs.prCommitTitle }}
+          prCommitBody: ${{ steps.common.outputs.prCommitBody }}
+          prBody: ${{ steps.common.outputs.prBody }}
+          
         run: |
           nix run github:LCOGT/devenv-k8s#octopilot -- \
             --fail-on-error --log-level debug \
@@ -193,19 +200,19 @@ jobs:
             --update 'exec(cmd=nix,args=develop --impure --command cd-update-staging `${{ github.workspace }}/built-images.json` `${{ github.sha }}`)' \
             \
             --git-branch-prefix 'octopilot-staging-' \
-            --git-author-name '${{ steps.common.outputs.botName }}' \
-            --git-author-email '${{ steps.common.outputs.botEmail }}' \
-            --git-committer-name '${{ steps.common.outputs.botName }}' \
-            --git-committer-email '${{ steps.common.outputs.botEmail }}' \
-            --git-commit-title 'staging: ${{ steps.common.outputs.prCommitTitle }}' \
-            --git-commit-body  '${{ steps.common.outputs.prCommitBody }}' \
+            --git-author-name "$botName" \
+            --git-author-email "$botEmail" \
+            --git-committer-name "$botName" \
+            --git-committer-email "$botEmail" \
+            --git-commit-title "staging: $prCommitTitle" \
+            --git-commit-body "$prCommitBody \
             --git-commit-footer '' \
             \
             --pr-base-branch main \
             --pr-labels octopilot,staging \
             --pr-assignees '${{ github.actor }}' \
-            --pr-title 'staging: ${{ steps.common.outputs.prCommitTitle }}' \
-            --pr-body '${{ steps.common.outputs.prBody }}' \
+            --pr-title "staging: $prCommitTitle" \
+            --pr-body "$prBody" \
             --pr-merge \
             --pr-merge-auto \
             --pr-merge-auto-wait \
@@ -260,6 +267,12 @@ jobs:
 
       - name: Create prod PR
         if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')
+        env:
+          botName: ${{ steps.common.outputs.botName }}
+          botEmail: ${{ steps.common.outputs.botEmail }}
+          prCommitTitle: ${{ steps.common.outputs.prCommitTitle }}
+          prCommitBody: ${{ steps.common.outputs.prCommitBody }}
+          prBody: ${{ steps.common.outputs.prBody }}
         run: |
           nix run github:LCOGT/devenv-k8s#octopilot -- \
             --fail-on-error --log-level debug \
@@ -273,19 +286,19 @@ jobs:
             --update 'exec(cmd=nix,args=develop --impure --command cd-update-prod `${{ steps.staging-pr.outputs.sha }}`)' \
             \
             --git-branch-prefix 'octopilot-prod-' \
-            --git-author-name '${{ steps.common.outputs.botName }}' \
-            --git-author-email '${{ steps.common.outputs.botEmail }}' \
-            --git-committer-name '${{ steps.common.outputs.botName }}' \
-            --git-committer-email '${{ steps.common.outputs.botEmail }}' \
-            --git-commit-title 'prod: ${{ steps.common.outputs.prCommitTitle }}' \
-            --git-commit-body  '${{ steps.common.outputs.prCommitBody }}' \
+            --git-author-name "$botName" \
+            --git-author-email "$botEmail" \
+            --git-committer-name "$botName" \
+            --git-committer-email "$botEmail" \
+            --git-commit-title "prod: $prCommitTitle" \
+            --git-commit-body "$prCommitBody \
             --git-commit-footer '' \
             \
             --pr-base-branch main \
             --pr-labels octopilot,prod \
             --pr-assignees '${{ github.actor }}' \
-            --pr-title 'prod: ${{ steps.common.outputs.prCommitTitle }}' \
-            --pr-body '${{ steps.common.outputs.prBody }}' \
+            --pr-title "prod: $prCommitTitle" \
+            --pr-body "$prBody" \
             --output-results prod-pr.json
 
       - name: Annotate w/ prod PR
