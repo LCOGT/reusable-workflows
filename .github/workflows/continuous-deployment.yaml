@@ -205,7 +205,7 @@ jobs:
             --git-committer-name "$botName" \
             --git-committer-email "$botEmail" \
             --git-commit-title "staging: $prCommitTitle" \
-            --git-commit-body "$prCommitBody \
+            --git-commit-body "$prCommitBody" \
             --git-commit-footer '' \
             \
             --pr-base-branch main \
@@ -291,7 +291,7 @@ jobs:
             --git-committer-name "$botName" \
             --git-committer-email "$botEmail" \
             --git-commit-title "prod: $prCommitTitle" \
-            --git-commit-body "$prCommitBody \
+            --git-commit-body "$prCommitBody" \
             --git-commit-footer '' \
             \
             --pr-base-branch main \
