@@ -13,26 +13,22 @@ on:
       skaffoldBuildProfiles:
         type: string
         description: Comma seperated list of Skaffold profile(s) to use for building container(s).
-        required: true
         default: "app"
         
       skaffoldBuildModules:
         type: string
         description: Comma seperated list of Skaffold modules(s) to use for building container(s). By default all modules are used.
-        required: true
         default: ""
 
       submodules:
         type: string
         description: "`true` to checkout submodules or `recursive` to recursively checkout submodules."
-        required: true
         default: "false"
 
       deployRepo:
         type: string
         description: >
           Name of the deploy repo. By default this is just the name of the source repo with `-deploy` appended to it."
-        required: true
         default: ""
 
 jobs:
