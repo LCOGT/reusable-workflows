@@ -23,6 +23,12 @@ on:
         required: true
         default: ""
 
+      submodules:
+        type: string
+        description: "`true` to checkout submodules or `recursive` to recursively checkout submodules."
+        required: true
+        default: "false"
+
 jobs:
   container:
     runs-on: ubuntu-latest
@@ -48,6 +54,7 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+          submodules: ${{ inputs.submodules }}
 
       - name: Install Nix
         uses: cachix/install-nix-action@v24
