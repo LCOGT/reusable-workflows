@@ -109,7 +109,13 @@ jobs:
           app-id: ${{ secrets.LCO_DEPLOY_BOT_APP_ID }}
           private-key: ${{ secrets.LCO_DEPLOY_BOT_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-
+          
+      - name: Get GitHub App User ID
+        id: lco-deploy-bot-id
+        run: echo "user-id=$(gh api "/users/${{ steps.lco-deploy-bot.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.lco-deploy-bot.outputs.token }}
+          
       - name: Install Nix
         uses: cachix/install-nix-action@v24
         with:
@@ -130,23 +136,36 @@ jobs:
       - name: Gather commit/PR metadata
         id: common
         uses: actions/github-script@v7
+        env:
+          botName: "${{ steps.lco-deploy-bot.outputs.app-slug }}[bot]"
+          botId: "${{ steps.lco-deploy-bot-id.outputs.id }}"
         with:
           script: |
-            const botName = "${{ vars.LCO_DEPLOY_BOT_APP_NAME }}[bot]";
-            const botActorId = "${{ vars.LCO_DEPLOY_BOT_APP_ACTOR_ID }}";
-            const botEmail = `${botActorId}+${botName}@users.noreply.github.com`;
+            const botName = process.env.botName;
+            const botId = process.env.botId;
+            const botEmail = `${botId}+${botName}@users.noreply.github.com`;
 
-            const coAuthoredBy = "Co-authored-by: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>";
+            const coAuthoredBy = `Co-authored-by: ${botName} <${botEmail}>";
 
             let prCommitTitle;
+            let gitCommitterName;
+            let gitCommitterEmail;
 
             const prCommitBodyElms = [];
             const prBodyElms = [];
+            const prAssignees = [];
+
+            if (context.payload.sender.type === "User") {
+              prAssignees.push(context.payload.sender.login);
+            }
 
             if (context.eventName === "release") {
               const release = context.payload.release;
 
               prCommitTitle = `release: ${release.name}`;
+
+              gitCommitterName = release.author.name;
+              gitCommitterEmail = release.author.email || "";
 
               const ownerRepo = `${context.repo.owner}/${context.repo.repo}`;
               const releaseId = `${ownerRepo}/${release.tag_name}`;
@@ -155,14 +174,22 @@ jobs:
               prCommitBodyElms.push(releaseNotesTemplate);
               prBodyElms.push(releaseNotesTemplate);
             } else {
-              const commitMessage = context.payload.head_commit.message;
+              const head_commit = context.pyaload.head_commit;
+              const commitMessage = head_commit.message;
               const commitLines = commitMessage.split("\n");
               const commitSubject = commitLines.at(0);
               const commitBody = commitLines.slice(1).join("\n");
 
-              const commitUrl = context.payload.head_commit.url;
+              const commitUrl = head_commit.url;
 
               prCommitTitle = commitSubject;
+
+              gitCommitterName = head_commit.committer.name;
+              gitCommitterEmail =  head_commit.committer.email || "";
+
+              if (head_commit.commiter.username) {
+                prAssignees.push(head_commit.commiter.username);
+              }
 
               prCommitBodyElms.push(`Source-commit: ${commitUrl}`, commitBody);
               prBodyElms.push(`Source-commit: ${commitUrl}`, commitBody);
@@ -173,20 +200,14 @@ jobs:
             prCommitBody = prCommitBodyElms.filter(x => x).join("\n\n");
             prBody = prBodyElms.filter(x => x).join("\n<br>\n");
 
-            core.setOutput("botName", botName);
-            core.setOutput("botEmail", botEmail);
-            core.setOutput("prCommitTitle", prCommitTitle);
-            core.setOutput("prCommitBody", prCommitBody);
-            core.setOutput("prBody", prBody);
+            core.exportVariable("committerName", committerName);
+            core.exportVariable("committerEmail", committerEmail);
+            core.exportVariable("prCommitTitle", prCommitTitle);
+            core.exportVariable("prCommitBody", prCommitBody);
+            core.exportVariable("prBody", prBody);
+            core.exportVariable("prAssignees", [...new Set(prAssignees.filter(x => x))].join(","));
 
       - name: Create & merge staging PR
-        env:
-          botName: ${{ steps.common.outputs.botName }}
-          botEmail: ${{ steps.common.outputs.botEmail }}
-          prCommitTitle: ${{ steps.common.outputs.prCommitTitle }}
-          prCommitBody: ${{ steps.common.outputs.prCommitBody }}
-          prBody: ${{ steps.common.outputs.prBody }}
-          
         run: |
           nix run github:LCOGT/devenv-k8s#octopilot -- \
             --fail-on-error --log-level debug \
@@ -200,17 +221,17 @@ jobs:
             --update 'exec(cmd=nix,args=develop --impure --command cd-update-staging `${{ github.workspace }}/built-images.json` `${{ github.sha }}`)' \
             \
             --git-branch-prefix 'octopilot-staging-' \
-            --git-author-name "$botName" \
-            --git-author-email "$botEmail" \
-            --git-committer-name "$botName" \
-            --git-committer-email "$botEmail" \
+            --git-author-name "$committerName" \
+            --git-author-email "$committerEmail" \
+            --git-committer-name "$committerName" \
+            --git-committer-email "$committerEmail" \
             --git-commit-title "staging: $prCommitTitle" \
             --git-commit-body "$prCommitBody" \
             --git-commit-footer '' \
             \
             --pr-base-branch main \
             --pr-labels octopilot,staging \
-            --pr-assignees '${{ github.actor }}' \
+            --pr-assignees "$prAssignees" \
             --pr-title "staging: $prCommitTitle" \
             --pr-body "$prBody" \
             --pr-merge \
@@ -267,12 +288,6 @@ jobs:
 
       - name: Create prod PR
         if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')
-        env:
-          botName: ${{ steps.common.outputs.botName }}
-          botEmail: ${{ steps.common.outputs.botEmail }}
-          prCommitTitle: ${{ steps.common.outputs.prCommitTitle }}
-          prCommitBody: ${{ steps.common.outputs.prCommitBody }}
-          prBody: ${{ steps.common.outputs.prBody }}
         run: |
           nix run github:LCOGT/devenv-k8s#octopilot -- \
             --fail-on-error --log-level debug \
@@ -286,17 +301,17 @@ jobs:
             --update 'exec(cmd=nix,args=develop --impure --command cd-update-prod `${{ steps.staging-pr.outputs.sha }}`)' \
             \
             --git-branch-prefix 'octopilot-prod-' \
-            --git-author-name "$botName" \
-            --git-author-email "$botEmail" \
-            --git-committer-name "$botName" \
-            --git-committer-email "$botEmail" \
+            --git-author-name "$committerName" \
+            --git-author-email "$committerEmail" \
+            --git-committer-name "$commiterName" \
+            --git-committer-email "$commiterEmail" \
             --git-commit-title "prod: $prCommitTitle" \
             --git-commit-body "$prCommitBody" \
             --git-commit-footer '' \
             \
             --pr-base-branch main \
             --pr-labels octopilot,prod \
-            --pr-assignees '${{ github.actor }}' \
+            --pr-assignees "$prAssignees" \
             --pr-title "prod: $prCommitTitle" \
             --pr-body "$prBody" \
             --output-results prod-pr.json
