@@ -200,8 +200,8 @@ jobs:
             prCommitBody = prCommitBodyElms.filter(x => x).join("\n\n");
             prBody = prBodyElms.filter(x => x).join("\n<br>\n");
 
-            core.exportVariable("committerName", committerName);
-            core.exportVariable("committerEmail", committerEmail);
+            core.exportVariable("gitCommitterName", gitCommitterName);
+            core.exportVariable("gitCommitterEmail", gitCommitterEmail);
             core.exportVariable("prCommitTitle", prCommitTitle);
             core.exportVariable("prCommitBody", prCommitBody);
             core.exportVariable("prBody", prBody);
@@ -221,10 +221,10 @@ jobs:
             --update 'exec(cmd=nix,args=develop --impure --command cd-update-staging `${{ github.workspace }}/built-images.json` `${{ github.sha }}`)' \
             \
             --git-branch-prefix 'octopilot-staging-' \
-            --git-author-name "$committerName" \
-            --git-author-email "$committerEmail" \
-            --git-committer-name "$committerName" \
-            --git-committer-email "$committerEmail" \
+            --git-author-name "$gitCommitterName" \
+            --git-author-email "$gitCommitterEmail" \
+            --git-committer-name "$gitCommitterName" \
+            --git-committer-email "$gitCommitterEmail" \
             --git-commit-title "staging: $prCommitTitle" \
             --git-commit-body "$prCommitBody" \
             --git-commit-footer '' \
@@ -301,10 +301,10 @@ jobs:
             --update 'exec(cmd=nix,args=develop --impure --command cd-update-prod `${{ steps.staging-pr.outputs.sha }}`)' \
             \
             --git-branch-prefix 'octopilot-prod-' \
-            --git-author-name "$committerName" \
-            --git-author-email "$committerEmail" \
-            --git-committer-name "$commiterName" \
-            --git-committer-email "$commiterEmail" \
+            --git-author-name "$gitCommitterName" \
+            --git-author-email "$gitCommitterEmail" \
+            --git-committer-name "$gitCommitterName" \
+            --git-committer-email "$gitCommitterEmail" \
             --git-commit-title "prod: $prCommitTitle" \
             --git-commit-body "$prCommitBody" \
             --git-commit-footer '' \
