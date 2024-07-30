@@ -145,7 +145,7 @@ jobs:
             const botId = process.env.botId;
             const botEmail = `${botId}+${botName}@users.noreply.github.com`;
 
-            const coAuthoredBy = `Co-authored-by: ${botName} <${botEmail}>";
+            const coAuthoredBy = `Co-authored-by: ${botName} <${botEmail}>`;
 
             let prCommitTitle;
             let gitCommitterName;
