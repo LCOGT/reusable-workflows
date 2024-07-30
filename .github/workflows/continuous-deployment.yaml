@@ -164,11 +164,13 @@ jobs:
             }
 
             if (context.eventName === "release") {
-              const release = await github.rest.repos.getReleaseByTag({
+              const releaseReq = await github.rest.repos.getReleaseByTag({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 tag: context.payload.release.tag_name,
-              }).data;
+              });
+
+              const release = releaseReq.data;
 
               prCommitTitle = `release: ${release.name}`;
 
