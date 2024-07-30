@@ -174,7 +174,7 @@ jobs:
               prCommitBodyElms.push(releaseNotesTemplate);
               prBodyElms.push(releaseNotesTemplate);
             } else {
-              const head_commit = context.pyaload.head_commit;
+              const head_commit = context.payload.head_commit;
               const commitMessage = head_commit.message;
               const commitLines = commitMessage.split("\n");
               const commitSubject = commitLines.at(0);
