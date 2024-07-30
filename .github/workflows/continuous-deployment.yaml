@@ -251,7 +251,7 @@ jobs:
             const { readFile } = require("fs/promises");
             const data = JSON.parse(await readFile("staging-pr.json", "utf8"));
 
-            cons repo = data.repos[0];
+            const repo = data.repos[0];
 
             const pr_number = repo.pr.number;
 
