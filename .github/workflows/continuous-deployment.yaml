@@ -44,6 +44,8 @@ jobs:
     env:
       REGISTRY: ghcr.io
 
+    if: github.event_name == 'push' || (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v'))
+
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -94,6 +96,8 @@ jobs:
           path: built-images.json
 
   update:
+    if: github.event_name == 'push' || (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v'))
+
     env:
       deployOrgRepo: ${{ (inputs.deployRepo && format('{0}/{1}', github.repository_owner, inputs.deployRepo)) || format('{0}-deploy', github.repository) }}
     runs-on: ubuntu-latest
@@ -160,7 +164,11 @@ jobs:
             }
 
             if (context.eventName === "release") {
-              const release = context.payload.release;
+              const release = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: context.payload.release.tag_name,
+              }).data;
 
               prCommitTitle = `release: ${release.name}`;
 
@@ -263,7 +271,7 @@ jobs:
             core.summary.write();
 
       - name: Get staging PR metadata
-        if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')
+        if: github.event_name == 'release'
         id: staging-pr
         uses: actions/github-script@v7
         with:
@@ -287,7 +295,7 @@ jobs:
             core.setOutput("sha", sha);
 
       - name: Create prod PR
-        if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')
+        if: github.event_name == 'release'
         run: |
           nix run github:LCOGT/devenv-k8s#octopilot -- \
             --fail-on-error --log-level debug \
@@ -318,7 +326,7 @@ jobs:
 
       - name: Annotate w/ prod PR
         uses: actions/github-script@v7
-        if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')
+        if: github.event_name == 'release'
         with:
           script: |
             const { readFile } = require("fs/promises");
