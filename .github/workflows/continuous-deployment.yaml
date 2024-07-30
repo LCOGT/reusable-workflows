@@ -187,8 +187,8 @@ jobs:
               gitCommitterName = head_commit.committer.name;
               gitCommitterEmail =  head_commit.committer.email || "";
 
-              if (head_commit.commiter.username) {
-                prAssignees.push(head_commit.commiter.username);
+              if (head_commit.committer.username !== null) {
+                prAssignees.push(head_commit.committer.username);
               }
 
               prCommitBodyElms.push(`Source-commit: ${commitUrl}`, commitBody);
