@@ -162,7 +162,7 @@ jobs:
             }
 
             if (context.eventName === "release") {
-              const resp = await github.graphql(
+              const { repository } = await github.graphql(
                 `query($owner: String!, $name: String!, $tagName: String!) {
                   repository(owner: $owner, name: $name){
                     release(tagName: $tagName) {
@@ -183,7 +183,7 @@ jobs:
                 }
               );
 
-              const release = resp.repository.release;
+              const release = repository.release;
 
               prCommitTitle = `release: ${release.name}`;
 
@@ -196,8 +196,8 @@ jobs:
               prCommitBodyElms.push(releaseNotesTemplate);
               prBodyElms.push(releaseNotesTemplate);
             } else {
-              const resp = await github.graphql(
-                `query($owner: String!, $name: String!, $sha: String!) {
+              const { repository } = await github.graphql(
+                `query($owner: String!, $name: String!, $sha: GitObjectID!) {
                   repository(owner: $owner, name: $name){
                     object(oid: $sha) {
                       ... on Commit {
@@ -232,7 +232,7 @@ jobs:
                   sha: context.sha,
                 }
               );
-              const commit = resp.repository.object;
+              const commit = repository.object;
               const commitMessage = commit.message;
               const commitSubject = commit.messageHeadline;
               const commitBody = commit.messageBody;
