@@ -158,7 +158,8 @@ jobs:
             const prAssignees = [];
 
             if (context.payload.sender.type === "User") {
-              prAssignees.push(context.payload.sender.login);
+              const login = context.payload.sender.login;
+              prAssignees.push(login);
 
                const { user } = await github.graphql(
                 `query($login: String!) {
@@ -167,11 +168,11 @@ jobs:
                   }
                 }`,
                 {
-                  login: context.payload.sender.login,
+                  login: login,
                 }
               );
 
-              coAuthors.push(`${user.name || "Unknown"} <${context.payload.sender.id}+${context.payload.sender.login}@users.noreply.github.com>`);
+              coAuthors.push(`${user.name || login} <${context.payload.sender.id}+${login}@users.noreply.github.com>`);
             }
 
             if (context.eventName === "release") {
@@ -182,9 +183,9 @@ jobs:
                       name
                       tagName
                       author {
-                        email
                         login
                         name
+                        databaseId
                       }
                     }
                   }
@@ -200,7 +201,7 @@ jobs:
 
               prCommitTitle = `release: ${release.name}`;
 
-              coAuthors.push(`${release.author.name || "Unknown"} <${release.author.email || ""}>`);
+              coAuthors.push(`${release.author.name || release.author.login} <${release.author.databaseId}+${release.author.login}@users.noreply.github.com>`);
 
               const ownerRepo = `${context.repo.owner}/${context.repo.repo}`;
               const releaseId = `${ownerRepo}/${release.tagName}`;
@@ -221,6 +222,10 @@ jobs:
                         committer {
                           name
                           email
+                          user {
+                            login
+                            databaseId
+                          }
                         }
                         author {
                           user {
@@ -231,6 +236,10 @@ jobs:
                           nodes {
                             name
                             email
+                            user {
+                              login
+                              databaseId
+                            }
                           }
                         }
                       }
@@ -252,13 +261,24 @@ jobs:
 
               prCommitTitle = commitSubject;
 
-              if (commit.author.user !== null) {
+              if (commit.author?.user !== null) {
                 prAssignees.push(commit.author.user.login);
               }
 
-              coAuthors.push(`${commit.committer.name || "Unknown"} <${commit.committer.email || ""}>`);
+              const coAuthorForGitActor = (x) => {
+                const name = `${x.name || x.user?.login || "Unknown"}`;
+                let email;
+                
+                if (x.user != null) {
+                  email = `${x.user.databaseId}+${x.user.login}@users.noreply.github.com`;
+                } else {
+                  email = x.email || "";
+                }
+                return `${name} <${email}>`;
+              };
 
-              coAuthors.push(...commit.authors.nodes.map(x => `${x.name || "Unknown"} <${x.email || ""}>`));
+              coAuthors.push(...commit.authors.nodes.map(coAuthorForGitActor));
+              coAuthors.push(coAuthorForGitActor(commit.committer));
 
               prCommitBodyElms.push(`Source-commit: ${commitUrl}`, commitBody);
               prBodyElms.push(`Source-commit: ${commitUrl}`, commitBody);
