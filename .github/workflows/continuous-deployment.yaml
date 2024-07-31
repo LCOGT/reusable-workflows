@@ -329,6 +329,8 @@ jobs:
             --pr-merge-auto \
             --pr-merge-auto-wait \
             --pr-merge-method squash \
+            --pr-merge-commit-title "$prCommitTitle" \
+            --pr-merge-commit-message "$prCommitBody" \
             --output-results staging-pr.json
 
       - name: Annotate w/ staging PR
