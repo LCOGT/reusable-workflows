@@ -163,8 +163,8 @@ jobs:
 
             if (context.eventName === "release") {
               const { repository } = await github.graphql(
-                `query($owner: String!, $name: String!, $tagName: String!) {
-                  repository(owner: $owner, name: $name){
+                `query($owner: String!, $repo: String!, $tagName: String!) {
+                  repository(owner: $owner, name: $repo){
                     release(tagName: $tagName) {
                       name
                       tagName
@@ -197,8 +197,8 @@ jobs:
               prBodyElms.push(releaseNotesTemplate);
             } else {
               const { repository } = await github.graphql(
-                `query($owner: String!, $name: String!, $sha: GitObjectID!) {
-                  repository(owner: $owner, name: $name){
+                `query($owner: String!, $repo: String!, $sha: GitObjectID!) {
+                  repository(owner: $owner, name: $repo){
                     object(oid: $sha) {
                       ... on Commit {
                         commitUrl
