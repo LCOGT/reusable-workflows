@@ -159,6 +159,19 @@ jobs:
 
             if (context.payload.sender.type === "User") {
               prAssignees.push(context.payload.sender.login);
+
+               const { user } = await github.graphql(
+                `query($login: String!) {
+                  user(login: $login){
+                    name
+                  }
+                }`,
+                {
+                  login: context.payload.sender.login,
+                }
+              );
+
+              coAuthors.push(`${user.name || "Unknown"} <${context.payload.sender.id}+${context.payload.sender.login}@users.noreply.github.com>`);
             }
 
             if (context.eventName === "release") {
@@ -206,10 +219,8 @@ jobs:
                         messageBody
                         messageHeadline
                         committer {
-                          user {
-                            name
-                            email
-                          }
+                          name
+                          email
                         }
                         author {
                           user {
