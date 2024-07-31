@@ -308,6 +308,7 @@ jobs:
             --pr-merge \
             --pr-merge-auto \
             --pr-merge-auto-wait \
+            --pr-merge-method squash \
             --output-results staging-pr.json
 
       - name: Annotate w/ staging PR
