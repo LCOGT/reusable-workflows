@@ -149,11 +149,9 @@ jobs:
             const botId = process.env.botId;
             const botEmail = `${botId}+${botName}@users.noreply.github.com`;
 
-            const coAuthoredBy = `Co-authored-by: ${botName} <${botEmail}>`;
-
+            const coAuthors = [];
+            
             let prCommitTitle;
-            let gitCommitterName;
-            let gitCommitterEmail;
 
             const prCommitBodyElms = [];
             const prBodyElms = [];
@@ -164,54 +162,106 @@ jobs:
             }
 
             if (context.eventName === "release") {
-              const releaseReq = await github.rest.repos.getReleaseByTag({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag: context.payload.release.tag_name,
-              });
+              const resp = await github.graphql(
+                `query($owner: String!, $name: String!, $tagName: String!) {
+                  repository(owner: $owner, name: $name){
+                    release(tagName: $tagName) {
+                      name
+                      tagName
+                      author {
+                        email
+                        login
+                        name
+                      }
+                    }
+                  }
+                }`,
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  tagName: context.payload.release.tag_name
+                }
+              );
 
-              const release = releaseReq.data;
+              const release = resp.repository.release;
 
               prCommitTitle = `release: ${release.name}`;
 
-              gitCommitterName = release.author.name;
-              gitCommitterEmail = release.author.email || "";
+              coAuthors.push(`${release.author.name || "Unknown"} <${release.author.email || ""}>`);
 
               const ownerRepo = `${context.repo.owner}/${context.repo.repo}`;
-              const releaseId = `${ownerRepo}/${release.tag_name}`;
+              const releaseId = `${ownerRepo}/${release.tagName}`;
               const releaseNotesTemplate = `{{ githubRelease "${releaseId}" | expandGithubLinks "${ownerRepo}" }}`;
 
               prCommitBodyElms.push(releaseNotesTemplate);
               prBodyElms.push(releaseNotesTemplate);
             } else {
-              const head_commit = context.payload.head_commit;
-              const commitMessage = head_commit.message;
-              const commitLines = commitMessage.split("\n");
-              const commitSubject = commitLines.at(0);
-              const commitBody = commitLines.slice(1).join("\n");
-
-              const commitUrl = head_commit.url;
+              const resp = await github.graphql(
+                `query($owner: String!, $name: String!, $sha: String!) {
+                  repository(owner: $owner, name: $name){
+                    object(oid: $sha) {
+                      ... on Commit {
+                        commitUrl
+                        message
+                        messageBody
+                        messageHeadline
+                        committer {
+                          user {
+                            name
+                            email
+                          }
+                        }
+                        author {
+                          user {
+                            login
+                          }
+                        }
+                        authors(first: 15) {
+                          nodes {
+                            name
+                            email
+                          }
+                        }
+                      }
+                    }
+                  }
+                }`,
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  sha: context.sha,
+                }
+              );
+              const commit = resp.repository.object;
+              const commitMessage = commit.message;
+              const commitSubject = commit.messageHeadline;
+              const commitBody = commit.messageBody;
+              
+              const commitUrl = commit.commitUrl;
 
               prCommitTitle = commitSubject;
 
-              gitCommitterName = head_commit.committer.name;
-              gitCommitterEmail =  head_commit.committer.email || "";
-
-              if (head_commit.committer.username !== null) {
-                prAssignees.push(head_commit.committer.username);
+              if (commit.author.user !== null) {
+                prAssignees.push(commit.author.user.login);
               }
+
+              coAuthors.push(`${commit.committer.name || "Unknown"} <${commit.committer.email || ""}>`);
+
+              coAuthors.push(...commit.authors.nodes.map(x => `${x.name || "Unknown"} <${x.email || ""}>`));
 
               prCommitBodyElms.push(`Source-commit: ${commitUrl}`, commitBody);
               prBodyElms.push(`Source-commit: ${commitUrl}`, commitBody);
             }
+
+            const coAuthoredBy = [...new Set(coAuthors.filter(x => x).map(x => `Co-authored-by: ${x}`))].join("\n");
 
             prCommitBodyElms.push(coAuthoredBy);
 
             prCommitBody = prCommitBodyElms.filter(x => x).join("\n\n");
             prBody = prBodyElms.filter(x => x).join("\n<br>\n");
 
-            core.exportVariable("gitCommitterName", gitCommitterName);
-            core.exportVariable("gitCommitterEmail", gitCommitterEmail);
+            core.exportVariable("botName", botName);
+            core.exportVariable("botEmail", botEmail);
             core.exportVariable("prCommitTitle", prCommitTitle);
             core.exportVariable("prCommitBody", prCommitBody);
             core.exportVariable("prBody", prBody);
@@ -231,10 +281,10 @@ jobs:
             --update 'exec(cmd=nix,args=develop --impure --command cd-update-staging `${{ github.workspace }}/built-images.json` `${{ github.sha }}`)' \
             \
             --git-branch-prefix 'octopilot-staging-' \
-            --git-author-name "$gitCommitterName" \
-            --git-author-email "$gitCommitterEmail" \
-            --git-committer-name "$gitCommitterName" \
-            --git-committer-email "$gitCommitterEmail" \
+            --git-author-name "$botName" \
+            --git-author-email "$botEmail" \
+            --git-committer-name "$botName" \
+            --git-committer-email "$botEmail" \
             --git-commit-title "staging: $prCommitTitle" \
             --git-commit-body "$prCommitBody" \
             --git-commit-footer '' \
@@ -311,10 +361,10 @@ jobs:
             --update 'exec(cmd=nix,args=develop --impure --command cd-update-prod `${{ steps.staging-pr.outputs.sha }}`)' \
             \
             --git-branch-prefix 'octopilot-prod-' \
-            --git-author-name "$gitCommitterName" \
-            --git-author-email "$gitCommitterEmail" \
-            --git-committer-name "$gitCommitterName" \
-            --git-committer-email "$gitCommitterEmail" \
+            --git-author-name "$botName" \
+            --git-author-email "$botEmail" \
+            --git-committer-name "$botName" \
+            --git-committer-email "$botEmail" \
             --git-commit-title "prod: $prCommitTitle" \
             --git-commit-body "$prCommitBody" \
             --git-commit-footer '' \
