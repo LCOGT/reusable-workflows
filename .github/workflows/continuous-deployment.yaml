@@ -296,7 +296,7 @@ jobs:
             core.exportVariable("prCommitTitle", prCommitTitle);
             core.exportVariable("prCommitBody", prCommitBody);
             core.exportVariable("prBody", prBody);
-            core.exportVariable("prAssignees", [...new Set(prAssignees.filter(x => x))].join(","));
+            core.exportVariable("prAssignees", [...new Set(prAssignees.filter(x => !x.includes("[bot]")))].join(","));
 
       - name: Create & merge staging PR
         run: |
