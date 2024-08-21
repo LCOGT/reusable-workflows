@@ -175,6 +175,8 @@ jobs:
               coAuthors.push(`${user.name || login} <${context.payload.sender.id}+${login}@users.noreply.github.com>`);
             }
 
+            const ownerRepo = `${context.repo.owner}/${context.repo.repo}`;
+
             if (context.eventName === "release") {
               const { repository } = await github.graphql(
                 `query($owner: String!, $repo: String!, $tagName: String!) {
@@ -203,7 +205,6 @@ jobs:
 
               coAuthors.push(`${release.author.name || release.author.login} <${release.author.databaseId}+${release.author.login}@users.noreply.github.com>`);
 
-              const ownerRepo = `${context.repo.owner}/${context.repo.repo}`;
               const releaseId = `${ownerRepo}/${release.tagName}`;
               const releaseNotesTemplate = `{{ githubRelease "${releaseId}" | expandGithubLinks "${ownerRepo}" }}`;
 
@@ -259,7 +260,8 @@ jobs:
               
               const commitUrl = commit.commitUrl;
 
-              prCommitTitle = commitSubject;
+              core.exportVariable("_commitSubjectRaw", commitSubject);
+              prCommitTitle = `{{ env "_commitSubjectRaw" | expandGithubLinks "${ownerRepo}" }}`;
 
               if (commit.author?.user !== null) {
                 prAssignees.push(commit.author.user.login);
@@ -280,8 +282,12 @@ jobs:
               coAuthors.push(...commit.authors.nodes.map(coAuthorForGitActor));
               coAuthors.push(coAuthorForGitActor(commit.committer));
 
-              prCommitBodyElms.push(`Source-commit: ${commitUrl}`, commitBody);
-              prBodyElms.push(`Source-commit: ${commitUrl}`, commitBody);
+              core.exportVariable("_commitBodyRaw", commitBody);
+
+              const bodyTemplate = `{{ env "_commitBodyRaw" | expandGithubLinks "${ownerRepo}" }}`;
+
+              prCommitBodyElms.push(`Source-commit: ${commitUrl}`, bodyTemplate);
+              prBodyElms.push(`Source-commit: ${commitUrl}`, bodyTemplate);
             }
 
             const coAuthoredBy = [...new Set(coAuthors.filter(x => x).map(x => `Co-authored-by: ${x}`))].join("\n");
