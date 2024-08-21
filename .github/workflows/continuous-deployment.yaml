@@ -172,7 +172,7 @@ jobs:
                 }
               );
 
-              coAuthors.push(`${user.name || login} <${context.payload.sender.id}+${login}@users.noreply.github.com>`);
+              coAuthors.push([`${user.name || login}`, `${context.payload.sender.id}+${login}@users.noreply.github.com`]);
             }
 
             const ownerRepo = `${context.repo.owner}/${context.repo.repo}`;
@@ -203,7 +203,7 @@ jobs:
 
               prCommitTitle = `release: ${release.name}`;
 
-              coAuthors.push(`${release.author.name || release.author.login} <${release.author.databaseId}+${release.author.login}@users.noreply.github.com>`);
+              coAuthors.push([`${release.author.name || release.author.login}`, `${release.author.databaseId}+${release.author.login}@users.noreply.github.com`]);
 
               const releaseId = `${ownerRepo}/${release.tagName}`;
               const releaseNotesTemplate = `{{ githubRelease "${releaseId}" | expandGithubLinks "${ownerRepo}" }}`;
@@ -276,7 +276,7 @@ jobs:
                 } else {
                   email = x.email || "";
                 }
-                return `${name} <${email}>`;
+                return [`${name}`, `${email}`];
               };
 
               coAuthors.push(...commit.authors.nodes.map(coAuthorForGitActor));
@@ -290,7 +290,15 @@ jobs:
               prBodyElms.push(`Source-commit: ${commitUrl}`, bodyTemplate);
             }
 
-            const coAuthoredBy = [...new Set(coAuthors.filter(x => x).map(x => `Co-authored-by: ${x}`))].join("\n");
+            const seenAuthors = new Set();
+            const coAuthoredBy = coAuthors.filter(x => {
+              if (seenAuthors.has(x[1])) {
+                return false;
+              }
+
+              seenAuthors.add(x[1]);
+              return true;
+            }).map(x => `Co-authored-by: ${x[0]} <${x[1]}>`).join("\n");
 
             prCommitBodyElms.push(coAuthoredBy);
 
