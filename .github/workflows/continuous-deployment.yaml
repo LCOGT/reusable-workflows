@@ -13,12 +13,12 @@ on:
       skaffoldBuildProfiles:
         type: string
         description: Comma seperated list of Skaffold profile(s) to use for building container(s).
-        default: "app"
+        default: ""
         
       skaffoldBuildModules:
         type: string
-        description: Comma seperated list of Skaffold modules(s) to use for building container(s). By default all modules are used.
-        default: ""
+        description: Comma seperated list of Skaffold modules(s) to use for building container(s).
+        default: "app"
 
       submodules:
         type: string
