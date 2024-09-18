@@ -31,7 +31,7 @@ on:
           Name of the deploy repo. By default this is just the name of the source repo with `-deploy` appended to it."
         default: ""
 
-      exposeSecretsToSkaffold:
+      secretsExposedToSkaffold:
         type: string
         description: >
           Comma seperated list of secrets to expose as environment variables to skaffold build.
@@ -96,7 +96,7 @@ jobs:
           SKAFFOLD_BUILDX_ARGS: "--cache-to type=gha,mode=max,ignore-error=true --cache-from type=gha"
         run: |-
           # Export select secrets
-          export $(jq -r --null-input --arg toExpose '${{ inputs.exposeSecretsToSkaffold }}' --argjson secrets '${{ toJSON(secrets) }}' '$toExpose | split(",") | map(gsub("^\\s+|\\s+$";""))[] | select($secrets[.] != null)'
+          export $(jq -r --null-input --arg toExpose '${{ inputs.secretsExposedToSkaffold }}' --argjson secrets '${{ toJSON(secrets) }}' '$toExpose | split(",") | map(gsub("^\\s+|\\s+$";""))[] | select($secrets[.] != null)'
           
           nix develop --impure --command skaffold build -m '${{ inputs.skaffoldBuildModules }}' -p '${{ inputs.skaffoldBuildProfiles }}' --file-output built-images.json --default-repo '${{ env.REGISTRY }}/${{ github.repository }}'
 
