@@ -96,7 +96,11 @@ jobs:
           SKAFFOLD_BUILDX_ARGS: "--cache-to type=gha,mode=max,ignore-error=true --cache-from type=gha"
         run: |-
           # Export select secrets
-          echo $(jq -r --null-input --arg toExpose '${{ inputs.secretsExposedToSkaffold }}' --argjson secrets '${{ toJSON(secrets) }}' '$toExpose | split(",") | map(gsub("^\\s+|\\s+$";""))[] | select($secrets[.] != null)')
+          exposedSecrets=$(jq -r --null-input --arg toExpose '${{ inputs.secretsExposedToSkaffold }}' --argjson secrets '${{ toJSON(secrets) }}' '$toExpose | split(",") | map(gsub("^\\s+|\\s+$";""))[] | select($secrets[.] != null)')
+
+          if test -n "$exposedSecrets"; then
+            export $exposedSecrets
+          fi
           
           nix develop --impure --command skaffold build -m '${{ inputs.skaffoldBuildModules }}' -p '${{ inputs.skaffoldBuildProfiles }}' --file-output built-images.json --default-repo '${{ env.REGISTRY }}/${{ github.repository }}'
 
