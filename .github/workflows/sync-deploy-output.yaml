@@ -34,7 +34,7 @@ jobs:
         continue-on-error: true
 
       - name: Update PR w/ changes
-        shell: /usr/bin/bash -c nix develop --impure --command bash -e {0}
+        shell: /usr/bin/bash -c "nix develop --impure --command bash -e {0}"
         run: |-
           git config user.name '${{ vars.LCO_DEPLOY_BOT_APP_NAME }}[bot]'
           git config user.email '${{ vars.LCO_DEPLOY_BOT_APP_ACTOR_ID }}+${{ vars.LCO_DEPLOY_BOT_APP_NAME }}@users.noreply.github.com'
