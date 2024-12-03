@@ -96,7 +96,7 @@ jobs:
           SKAFFOLD_BUILDX_ARGS: "--cache-to type=gha,mode=max,ignore-error=true --cache-from type=gha"
         run: |-
           # Export select secrets
-          exposedSecrets=$(jq -r --null-input --arg toExpose '${{ inputs.secretsExposedToSkaffold }}' --argjson secrets '${{ toJSON(secrets) }}' '$toExpose | split(",") | map(gsub("^\\s+|\\s+$";""))[] | select($secrets[.] != null)')
+          exposedSecrets=$(jq -r --null-input --arg toExpose '${{ inputs.secretsExposedToSkaffold }}' --argjson secrets '${{ toJSON(secrets) }}' '$toExpose | split(",") | map(gsub("^\\s+|\\s+$";""))[] | select($secrets[.] != null) | "\(.)=\($secrets[.])"')
 
           if test -n "$exposedSecrets"; then
             export $exposedSecrets
