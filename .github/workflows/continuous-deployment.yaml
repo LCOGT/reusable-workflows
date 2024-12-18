@@ -38,6 +38,12 @@ on:
           This can be used to inject any secrets needed to build the docker container.
         default: ""
 
+      baseKustomizationPath:
+        type: string
+        description: >
+          Path to the base kustomization
+        default: "k8s/base"
+
 jobs:
   container:
     runs-on: ubuntu-latest
@@ -81,14 +87,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Cache/restore skaffold
-        uses: actions/cache@v3
-        with:
-          path: ~/.skaffold/
-          key: skaffold-${{ github.sha }}
-          restore-keys: |
-            skaffold-
 
       - name: Build and push container image
         id: skaffold
@@ -329,6 +327,29 @@ jobs:
 
       - name: Create & merge staging PR
         run: |
+          cat <<- 'EOF' > update.sh
+            set -xe
+            
+            pushd "$DEVENV_ROOT"
+
+            pushd staging/
+
+            # Update container images
+            pushd cd-set-images/
+            jq -r '.builds[] | "\(.imageName)=\(.tag)"' "${{ github.workspace }}/built-images.json" | xargs -L1 kustomize edit set image
+            popd
+
+            # Copy over base
+            rm -rf base/
+            kpt pkg get https://github.com/${{ github.repository }}/${{ inputs.baseKustomizationPath }}@${{ github.sha }} base
+            popd
+
+            # Render kustomization
+            kustomize build staging/ --output output/staging/manifest.yaml
+            popd
+            
+          EOF
+          
           nix run github:LCOGT/devenv-k8s#octopilot -- \
             --fail-on-error --log-level debug \
             --github-auth-method app \
@@ -338,7 +359,7 @@ jobs:
             \
             --repo '${{ env.deployOrgRepo }}' \
             \
-            --update 'exec(cmd=nix,args=develop --impure --command cd-update-staging `${{ github.workspace }}/built-images.json` `${{ github.sha }}`)' \
+            --update 'exec(cmd=nix,args=develop --impure --command bash `${{ github.workspace }}/update.sh`)' \
             \
             --git-branch-prefix 'octopilot-staging-' \
             --git-author-name "$botName" \
@@ -412,6 +433,29 @@ jobs:
       - name: Create prod PR
         if: github.event_name == 'release'
         run: |
+          cat <<- 'EOF' > update.sh
+            set -xe
+            
+            pushd "$DEVENV_ROOT"
+
+            pushd prod/
+
+            # Update container images
+            pushd cd-set-images/
+            jq -r '.builds[] | "\(.imageName)=\(.tag)"' "${{ github.workspace }}/built-images.json" | xargs -L1 kustomize edit set image
+            popd
+
+            # Copy over base
+            rm -rf base/
+            kpt pkg get https://github.com/${{ github.repository }}/${{ inputs.baseKustomizationPath }}@${{ github.sha }} base
+            popd
+
+            # Render kustomization
+            kustomize build prod/ --output output/prod/manifest.yaml
+            popd
+            
+          EOF
+          
           nix run github:LCOGT/devenv-k8s#octopilot -- \
             --fail-on-error --log-level debug \
             --github-auth-method app \
@@ -421,7 +465,7 @@ jobs:
             \
             --repo '${{ env.deployOrgRepo }}' \
             \
-            --update 'exec(cmd=nix,args=develop --impure --command cd-update-prod `${{ steps.staging-pr.outputs.sha }}`)' \
+            --update 'exec(cmd=nix,args=develop --impure --command bash `${{ github.workspace }}/update.sh`)' \
             \
             --git-branch-prefix 'octopilot-prod-' \
             --git-author-name "$botName" \
