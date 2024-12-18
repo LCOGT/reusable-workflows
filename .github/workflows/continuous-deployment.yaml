@@ -38,6 +38,12 @@ on:
           This can be used to inject any secrets needed to build the docker container.
         default: ""
 
+      baseKustomizationPath:
+        type: string
+        description: >
+          Path to the base kustomization
+        default: "k8s/base"
+
 jobs:
   container:
     runs-on: ubuntu-latest
@@ -343,7 +349,7 @@ jobs:
 
             # Copy over base
             rm -rf base/
-            kpt pkg get https://github.com/${{ github.repository }}/k8s/base@${{ github.sha }} base
+            kpt pkg get https://github.com/${{ github.repository }}/${{ inputs.baseKustomizationPath }}@${{ github.sha }} base
             popd
 
             # Render kustomization
