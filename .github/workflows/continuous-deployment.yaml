@@ -105,7 +105,7 @@ jobs:
             export $exposedSecrets
           fi
           
-          nix develop --impure --command skaffold build -m '${{ inputs.skaffoldBuildModules }}' -p '${{ inputs.skaffoldBuildProfiles }}' --file-output built-images.json --default-repo '${{ env.REGISTRY }}/${{ github.repository }}' --push
+          nix develop github:LCOGT/devenv-k8s/v1 --impure --command skaffold build -m '${{ inputs.skaffoldBuildModules }}' -p '${{ inputs.skaffoldBuildProfiles }}' --file-output built-images.json --default-repo '${{ env.REGISTRY }}/${{ github.repository }}' --push
 
       - name: Upload Skaffold build artifacts
         uses: actions/upload-artifact@v4
@@ -364,7 +364,7 @@ jobs:
             \
             --repo '${{ env.deployOrgRepo }}' \
             \
-            --update 'exec(cmd=nix,args=develop --impure --command bash `${{ github.workspace }}/update.sh`)' \
+            --update 'exec(cmd=nix,args=develop github:LCOGT/devenv-k8s/v1 --impure --command bash `${{ github.workspace }}/update.sh`)' \
             \
             --git-branch-prefix 'octopilot-staging-' \
             --git-author-name "$botName" \
@@ -461,7 +461,7 @@ jobs:
             
           EOF
           
-          nix run github:LCOGT/devenv-k8s#octopilot -- \
+           run github:LCOGT/devenv-k8s#octopilot -- \
             --fail-on-error --log-level debug \
             --github-auth-method app \
             --github-app-id '${{ secrets.LCO_DEPLOY_BOT_APP_ID }}' \
@@ -470,7 +470,7 @@ jobs:
             \
             --repo '${{ env.deployOrgRepo }}' \
             \
-            --update 'exec(cmd=nix,args=develop --impure --command bash `${{ github.workspace }}/update.sh`)' \
+            --update 'exec(cmd=,args=develop github:LCOGT/devenv-k8s/v1 --impure --command bash `${{ github.workspace }}/update.sh`)' \
             \
             --git-branch-prefix 'octopilot-prod-' \
             --git-author-name "$botName" \
