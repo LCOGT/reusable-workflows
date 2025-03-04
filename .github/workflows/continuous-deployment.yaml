@@ -471,7 +471,7 @@ jobs:
             \
             --repo '${{ env.deployOrgRepo }}' \
             \
-            --update 'exec(cmd=,args=develop github:LCOGT/devenv-k8s/v1 --impure --command bash `${{ github.workspace }}/update.sh`)' \
+            --update 'exec(cmd=nix,args=develop github:LCOGT/devenv-k8s/v1 --impure --command bash `${{ github.workspace }}/update.sh`)' \
             \
             --git-branch-prefix 'octopilot-prod-' \
             --git-author-name "$botName" \
