@@ -105,7 +105,7 @@ jobs:
             export $exposedSecrets
           fi
           
-          nix develop .#devenv-test --impure --command skaffold build -m '${{ inputs.skaffoldBuildModules }}' -p '${{ inputs.skaffoldBuildProfiles }}' --file-output built-images.json --default-repo '${{ env.REGISTRY }}/${{ github.repository }}' --push
+          nix develop . --impure --command skaffold build -m '${{ inputs.skaffoldBuildModules }}' -p '${{ inputs.skaffoldBuildProfiles }}' --file-output built-images.json --default-repo '${{ env.REGISTRY }}/${{ github.repository }}' --push
 
       - name: Upload Skaffold build artifacts
         uses: actions/upload-artifact@v4
