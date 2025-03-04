@@ -10,6 +10,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - uses: jashandeep-sohi/action-cache-api-shim@v1
+
       - name: Install nix
         uses: cachix/install-nix-action@v24
         with:
