@@ -462,7 +462,7 @@ jobs:
             
           EOF
           
-           run github:LCOGT/devenv-k8s#octopilot -- \
+           nix run github:LCOGT/devenv-k8s#octopilot -- \
             --fail-on-error --log-level debug \
             --github-auth-method app \
             --github-app-id '${{ secrets.LCO_DEPLOY_BOT_APP_ID }}' \
