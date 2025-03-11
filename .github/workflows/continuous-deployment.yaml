@@ -367,6 +367,7 @@ jobs:
             \
             --update 'exec(cmd=nix,args=develop github:LCOGT/devenv-k8s/v1 --impure --command bash `${{ github.workspace }}/update.sh`)' \
             \
+            --git-stage-pattern 'staging' \
             --git-branch-prefix 'octopilot-staging-' \
             --git-author-name "$botName" \
             --git-author-email "$botEmail" \
@@ -473,6 +474,7 @@ jobs:
             \
             --update 'exec(cmd=nix,args=develop github:LCOGT/devenv-k8s/v1 --impure --command bash `${{ github.workspace }}/update.sh`)' \
             \
+            --git-stage-pattern 'prod' \
             --git-branch-prefix 'octopilot-prod-' \
             --git-author-name "$botName" \
             --git-author-email "$botEmail" \
