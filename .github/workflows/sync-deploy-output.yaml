@@ -7,6 +7,10 @@ on:
 
 jobs:
   sync-output:
+    ci:
+      permissions:
+        id-token: write
+        contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/create-github-app-token@v1
@@ -27,10 +31,11 @@ jobs:
         with:
           extra_nix_config: |
             accept-flake-config = true
-            extra-substituters =
-            trusted-public-keys =
 
-      - name: Run pre-commit hooks
+      - uses: DeterminateSystems/determinate-nix-action@v3
+      - uses: DeterminateSystems/flakehub-cache-action@main
+          
+          - name: Run pre-commit hooks
         run: nix develop --impure --command pre-commit run --all-files
         continue-on-error: true
 
