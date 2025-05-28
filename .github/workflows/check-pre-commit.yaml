@@ -17,8 +17,8 @@ jobs:
         with:
           extra_nix_config: |
             accept-flake-config = true
+            extra-substituters =
+            trusted-public-keys =
       
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-
       - name: Run pre-commit hooks
         run: nix develop --impure --command pre-commit run --all-files
