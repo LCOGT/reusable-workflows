@@ -6,11 +6,11 @@ on:
   workflow_call:
 
 jobs:
+  ci:
+    permissions:
+      id-token: write
+      contents: read
   sync-output:
-    ci:
-      permissions:
-        id-token: write
-        contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/create-github-app-token@v1
