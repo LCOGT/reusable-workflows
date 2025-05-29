@@ -8,6 +8,9 @@ on:
 jobs:
   sync-output:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/create-github-app-token@v1
         id: lco-deploy-bot
