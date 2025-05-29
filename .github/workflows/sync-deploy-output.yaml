@@ -6,10 +6,6 @@ on:
   workflow_call:
 
 jobs:
-  ci:
-    permissions:
-      id-token: write
-      contents: read
   sync-output:
     runs-on: ubuntu-latest
     steps:
