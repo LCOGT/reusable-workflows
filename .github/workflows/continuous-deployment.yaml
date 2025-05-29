@@ -120,6 +120,9 @@ jobs:
       deployOrgRepo: ${{ (inputs.deployRepo && format('{0}/{1}', github.repository_owner, inputs.deployRepo)) || format('{0}-deploy', github.repository) }}
     runs-on: ubuntu-latest
     needs: container
+    permissions:
+      id-token: write
+      contents: read
     concurrency:
       group: cd-update
 
@@ -144,8 +147,8 @@ jobs:
         with:
           extra_nix_config: |
             accept-flake-config = true
-            extra-substituters =
-            trusted-public-keys =
+            
+      - uses: DeterminateSystems/flakehub-cache-action@main
 
       - name: Configure Git to use lco-deploy-bot token
         run: |
