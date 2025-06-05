@@ -6,19 +6,20 @@ on:
 jobs:
   pre-commit-hooks:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - uses: jashandeep-sohi/action-cache-api-shim@v1
-
+        
       - name: Install nix
         uses: cachix/install-nix-action@v24
         with:
           extra_nix_config: |
             accept-flake-config = true
-      
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - uses: DeterminateSystems/flakehub-cache-action@main
 
       - name: Run pre-commit hooks
         run: nix develop --impure --command pre-commit run --all-files
