@@ -128,7 +128,6 @@ jobs:
       group: cd-update
 
     steps:
-      - uses: jashandeep-sohi/action-cache-api-shim@v1
       - name: Get a token as lco-deploy-bot
         uses: actions/create-github-app-token@v1
         id: lco-deploy-bot
