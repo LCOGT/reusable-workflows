@@ -401,6 +401,11 @@ jobs:
             const data = JSON.parse(await readFile("staging-pr.json", "utf8"));
 
             const pr = data.repos[0].pr;
+
+            if (pr === null) {
+              core.info("Skip because there is no PR");
+            }
+            
             const description = `Staging deploy PR #${pr.number}`;
 
             await github.rest.repos.createCommitStatus({
@@ -503,6 +508,10 @@ jobs:
             const data = JSON.parse(await readFile("prod-pr.json", "utf8"));
 
             const pr = data.repos[0].pr;
+            if (pr === null) {
+              core.info("Skip because there is no PR");
+            }
+            
             const description = `Prod deploy PR #${pr.number}`;
 
             await github.rest.repos.createCommitStatus({
