@@ -345,6 +345,9 @@ jobs:
             pushd staging/
 
             # Update container images
+            mkdir cd-set-images || true
+            kustomize init || true
+            
             pushd cd-set-images/
             jq -r '.builds[] | "\(.imageName)=\(.tag)"' "${{ github.workspace }}/built-images.json" | xargs -L1 kustomize edit set image
             popd
@@ -433,6 +436,9 @@ jobs:
             pushd prod/
 
             # Update container images
+            mkdir cd-set-images || true
+            kustomize init || true
+
             pushd cd-set-images/
             jq -r '.builds[] | "\(.imageName)=\(.tag)"' "${{ github.workspace }}/built-images.json" | xargs -L1 kustomize edit set image
             popd
