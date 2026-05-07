@@ -349,7 +349,8 @@ jobs:
             pushd cd-set-images/
 
             if [ ! -f "kustomization.yaml" ]; then
-            cat <<EOD > "kustomization.yaml"
+            
+            cat << 'EOD' > "kustomization.yaml"
             # This file is edited by a bot. Any changes may be overwritten.
             # Do not edit. Use a higher level Kustomization to make persistent changes.
             
@@ -358,6 +359,7 @@ jobs:
             
             resources: []
             EOD
+            
             fi
             
             jq -r '.builds[] | "\(.imageName)=\(.tag)"' "${{ github.workspace }}/built-images.json" | xargs -L1 kustomize edit set image
