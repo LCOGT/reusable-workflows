@@ -345,23 +345,7 @@ jobs:
             pushd staging/
 
             # Update container images
-            mkdir -p cd-set-images || true
             pushd cd-set-images/
-
-            if [ ! -f "kustomization.yaml" ]; then
-            
-            cat << 'EOD' > "kustomization.yaml"
-            # This file is edited by a bot. Any changes may be overwritten.
-            # Do not edit. Use a higher level Kustomization to make persistent changes.
-            
-            apiVersion: kustomize.config.k8s.io/v1alpha1
-            kind: Component
-            
-            resources: []
-            EOD
-            
-            fi
-            
             jq -r '.builds[] | "\(.imageName)=\(.tag)"' "${{ github.workspace }}/built-images.json" | xargs -L1 kustomize edit set image
             popd
 
@@ -449,21 +433,7 @@ jobs:
             pushd prod/
 
             # Update container images
-            mkdir -p cd-set-images || true
             pushd cd-set-images/
-
-            if [ ! -f "kustomization.yaml" ]; then
-            cat <<EOF > "kustomization.yaml"
-            # This file is edited by a bot. Any changes may be overwritten.
-            # Do not edit. Use a higher level Kustomization to make persistent changes.
-            
-            apiVersion: kustomize.config.k8s.io/v1alpha1
-            kind: Component
-            
-            resources: []
-            EOF
-            fi
-
             jq -r '.builds[] | "\(.imageName)=\(.tag)"' "${{ github.workspace }}/built-images.json" | xargs -L1 kustomize edit set image
             popd
 
